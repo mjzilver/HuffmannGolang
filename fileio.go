@@ -3,10 +3,8 @@ package main
 import (
 	"bufio"
 	"encoding/binary"
-	"fmt"
 	"log"
 	"os"
-	"strconv"
 )
 
 const (
@@ -39,27 +37,12 @@ func loadTextFromFile(filename string) (string, int64) {
 	return text, fileSize
 }
 
-func saveEncodedTextToFile(filename string, encodedText string) int64 {
+func saveEncodedTextToFile(filename string, bytes []byte) int64 {
 	file, err := os.Create(folder + filename)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer file.Close()
-
-	var bytes []byte
-	for i := 0; i < len(encodedText); i += 8 {
-		end := i + 8
-		if end > len(encodedText) {
-			end = len(encodedText)
-		}
-		binaryChunk := encodedText[i:end]
-		binaryValue, err := strconv.ParseInt(binaryChunk, 2, 16)
-		if err != nil {
-			fmt.Println("Error parsing binary string:", err)
-			return 0
-		}
-		bytes = append(bytes, byte(binaryValue))
-	}
 
 	err = binary.Write(file, binary.LittleEndian, bytes)
 	if err != nil {
@@ -74,4 +57,17 @@ func saveEncodedTextToFile(filename string, encodedText string) int64 {
 	fileSize := fileInfo.Size()
 
 	return fileSize
+}
+
+func saveTextToFile(filename string, text string) {
+	file, err := os.Create(folder + filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	_, err = file.WriteString(text)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

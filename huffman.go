@@ -1,5 +1,11 @@
 package main
 
+import "bytes"
+
+const (
+	EOF = '□'
+)
+
 func countFrequency(text string) map[rune]int {
 	freq := make(map[rune]int)
 	for _, char := range text {
@@ -49,27 +55,59 @@ func generateCodes(tree *huffmanNode) map[rune]string {
 	return codes
 }
 
-func encode(text string, codes map[rune]string) string {
-	encodedText := ""
+func encode(text string, codes map[rune]string) []byte {
+	var buffer bytes.Buffer
+	var bits byte
+	var bitCount int
+
 	for _, char := range text {
-		encodedText += codes[char]
+		code := codes[char]
+		for _, bit := range code {
+			bits = bits << 1
+			if bit == '1' {
+				bits |= 1
+			}
+			bitCount++
+			if bitCount == 8 {
+				buffer.WriteByte(bits)
+				bits = 0
+				bitCount = 0
+			}
+		}
 	}
-	return encodedText
+
+	if bitCount > 0 {
+		// Pad the remaining bits to form a complete byte
+		bits = bits << (8 - bitCount)
+		buffer.WriteByte(bits)
+	}
+
+	return buffer.Bytes()
 }
 
-func decode(encodedText string, tree *huffmanNode) string {
+func decode(encodedText []byte, tree *huffmanNode) string {
 	decodedText := ""
 	node := tree
+
 	for _, bit := range encodedText {
-		if bit == '0' {
-			node = node.left
-		} else {
-			node = node.right
-		}
-		if node.char != 0 {
-			decodedText += string(node.char)
-			node = tree
+		for i := 7; i >= 0; i-- {
+			if bit&(1<<uint(i)) == 0 {
+				node = node.left
+			} else {
+				node = node.right
+			}
+			if node.char != 0 {
+				char := node.char
+
+				if char == EOF {
+					return decodedText
+				}
+
+				decodedText += string(char)
+				node = tree
+			}
 		}
 	}
+
 	return decodedText
 }

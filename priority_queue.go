@@ -14,7 +14,7 @@ func (pq PriorityQueue) Less(i, j int) bool {
 	return pq[i].freq < pq[j].freq
 }
 
-// swap the elements
+// swap the elements (needed for heap.Interface)
 func (pq PriorityQueue) Swap(i, j int) {
 	pq[i], pq[j] = pq[j], pq[i]
 }

@@ -7,7 +7,7 @@ type huffmanNode struct {
 	right *huffmanNode
 }
 
-// func to print huffmanNode
+// debug function to print huffmanNode
 func (node *huffmanNode) String() string {
 	var left, right string
 	if node.left != nil {
