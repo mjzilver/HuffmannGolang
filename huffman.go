@@ -24,7 +24,7 @@ func buildHuffmanTree(freq map[rune]int) *huffmanNode {
 
 		pq.Push(node)
 	}
-	for pq.Len() > 1 {
+	for len(pq) > 1 {
 		l1, l2 := pq.Pop(), pq.Pop()
 
 		node := &huffmanNode{
