@@ -1,6 +1,7 @@
 package main
 
 import (
+	"huff/huffmann"
 	"time"
 )
 
@@ -9,12 +10,10 @@ func main() {
 
 	startTime := time.Now()
 
-	freq := countFrequency(text)
-	tree := buildHuffmanTree(freq)
-	codes := generateCodes(tree)
+	encodedText := huffmann.Encode(text)
+	encodedFileSize := saveEncodedTextToFile("encoded.bin", encodedText)
 
-	encodedText := encode(text, codes)
-	decodedText := decode(encodedText, tree)
+	decodedText := huffmann.Decode(encodedText)
 
 	saveTextToFile("decoded.txt", decodedText)
 
@@ -26,15 +25,10 @@ func main() {
 		println("Encoded text:", encodedText)
 		println("Decoded text:", decodedText)
 		println("The original text and the decoded text are not the same")
+
+		println("Original text length:", len(text))
+		println("Decoded text length:", len(decodedText))
 	}
-
-	// encode the tree
-	encodedTree := encodeTree(tree)
-
-	fileBytes := append(encodedText, encodedTree...)
-
-	// save the encoded text to a file
-	encodedFileSize := saveEncodedTextToFile("encoded.bin", fileBytes)
 
 	println("Original text size:", originalFileSize)
 	println("Encoded text size:", encodedFileSize)
@@ -48,8 +42,4 @@ func main() {
 		println("Elapsed milliseconds:", elapsedTime.Milliseconds())
 	}
 
-	decodedTree := decodeTree(encodedTree)
-
-	println("Original tree", tree.String())
-	println("Decoded tree ", decodedTree.String())
 }

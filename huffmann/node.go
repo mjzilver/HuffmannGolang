@@ -1,4 +1,4 @@
-package main
+package huffmann
 
 type huffmanNode struct {
 	char  rune
