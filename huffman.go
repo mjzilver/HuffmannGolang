@@ -1,9 +1,13 @@
 package main
 
-import "bytes"
+import (
+	"bytes"
+	"strings"
+)
 
 const (
-	EOF = '□'
+	SOF = rune(0x02)
+	EOF = rune(0x03)
 )
 
 func countFrequency(text string) map[rune]int {
@@ -60,6 +64,9 @@ func encode(text string, codes map[rune]string) []byte {
 	var bits byte
 	var bitCount int
 
+	// add custom EOF char to know where to stop
+	text += string(EOF)
+
 	for _, char := range text {
 		code := codes[char]
 		for _, bit := range code {
@@ -86,7 +93,7 @@ func encode(text string, codes map[rune]string) []byte {
 }
 
 func decode(encodedText []byte, tree *huffmanNode) string {
-	decodedText := ""
+	var sb strings.Builder
 	node := tree
 
 	for _, bit := range encodedText {
@@ -100,14 +107,54 @@ func decode(encodedText []byte, tree *huffmanNode) string {
 				char := node.char
 
 				if char == EOF {
-					return decodedText
+					return sb.String()
 				}
 
-				decodedText += string(char)
+				sb.WriteRune(char)
 				node = tree
 			}
 		}
 	}
 
-	return decodedText
+	return sb.String()
+}
+
+func encodeTree(tree *huffmanNode) []byte {
+	buffer := []byte{}
+	encodeNode(tree, &buffer)
+	return buffer
+}
+
+func encodeNode(node *huffmanNode, buffer *[]byte) {
+	if node.IsLeaf() {
+		*buffer = append(*buffer, 1)
+		*buffer = append(*buffer, byte(node.char))
+	} else {
+		*buffer = append(*buffer, 0)
+		encodeNode(node.left, buffer)
+		encodeNode(node.right, buffer)
+	}
+}
+
+func decodeTree(encodedTree []byte) *huffmanNode {
+	var index int
+	return decodeNode(encodedTree, &index)
+}
+
+func decodeNode(encodedTree []byte, index *int) *huffmanNode {
+	byte := encodedTree[*index]
+	*index++
+	// leaf is 1
+	if byte == 1 {
+		charByte := encodedTree[*index]
+		// up the index for the next byte
+		*index++
+		return &huffmanNode{char: rune(charByte)}
+	} else {
+		// read left and right
+		node := &huffmanNode{}
+		node.left = decodeNode(encodedTree, index)
+		node.right = decodeNode(encodedTree, index)
+		return node
+	}
 }

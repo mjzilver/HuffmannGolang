@@ -18,3 +18,7 @@ func (node *huffmanNode) String() string {
 	}
 	return left + string(node.char) + right
 }
+
+func (node *huffmanNode) IsLeaf() bool {
+	return node.left == nil && node.right == nil
+}
