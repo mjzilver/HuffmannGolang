@@ -20,8 +20,20 @@ func Decode(encodedText []byte) string {
 
 	node := tree
 
-	for _, bit := range encodedText[markerIndex+1:] {
-		for i := 7; i >= 0; i-- {
+	// last byte is uint8 for bits that are padding
+	padding := int(encodedText[len(encodedText)-1])
+	// Remove everthing before (and including) marker and padding byte
+	relevantBytes := encodedText[markerIndex+1 : len(encodedText)-1]
+
+	for index, bit := range relevantBytes {
+		// Determine the number of padding bits
+		paddingBits := 0
+		if index == len(relevantBytes)-1 {
+			paddingBits = padding
+		}
+
+		// Iterate over the bits, excluding padding bits
+		for i := 7; i >= paddingBits; i-- {
 			if bit&(1<<uint(i)) == 0 {
 				node = node.left
 			} else {
@@ -29,10 +41,6 @@ func Decode(encodedText []byte) string {
 			}
 			if node.char != 0 {
 				char := node.char
-
-				if char == EOF {
-					return sb.String()
-				}
 
 				sb.WriteRune(char)
 				node = tree

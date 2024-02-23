@@ -33,11 +33,18 @@ func Encode(text string) []byte {
 		}
 	}
 
+	// default padding is 0
+	var padding uint8 = 0
+
 	if bitCount > 0 {
 		// Pad the remaining bits to form a complete byte
 		bits = bits << (8 - bitCount)
+		padding = uint8(8 - bitCount)
 		buffer.WriteByte(bits)
 	}
+
+	// Add padding byte to the end of the file
+	buffer.WriteByte(padding)
 
 	return buffer.Bytes()
 }

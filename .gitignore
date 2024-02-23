@@ -1,2 +1,2 @@
-files/encoded.bin
+files/*.bin
 files/decoded.txt
