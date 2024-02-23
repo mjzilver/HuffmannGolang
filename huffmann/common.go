@@ -1,7 +1,6 @@
 package huffmann
 
 const (
-	EOF    = rune(0x00)
 	marker = byte(0xFF)
 )
 

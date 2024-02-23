@@ -37,10 +37,20 @@ func Start() {
 	encodedTextArea.Disable() // read-only
 
 	encodeButton := widget.NewButton("Encode", func() {
+		if len(unencodedTextArea.Text) == 0 {
+			dialog.ShowError(fmt.Errorf("no text to encode"), window)
+			return
+		}
+
 		go encodedTextArea.SetText(encode(unencodedTextArea.Text))
 	})
 
 	decodeButton := widget.NewButton("Decode", func() {
+		if len(encodedBytes) == 0 {
+			dialog.ShowError(fmt.Errorf("no encoded text to decode"), window)
+			return
+		}
+
 		go unencodedTextArea.SetText(decode(encodedTextArea.Text))
 	})
 
@@ -67,19 +77,13 @@ func Start() {
 }
 
 func encode(text string) string {
-	if len(text) == 0 {
-		dialog.ShowError(fmt.Errorf("no text to encode"), window)
-		return ""
-	}
-
 	encodedBytes = huffmann.Encode(text)
-	var encodedText string
-
+	var buffer bytes.Buffer
 	for _, b := range encodedBytes {
-		// display with leading zeros
-		encodedText += fmt.Sprintf("%08b", b)
-		encodedText += " "
+		buffer.WriteString(fmt.Sprintf("%08b ", b))
 	}
+
+	encodedText := buffer.String()
 
 	setCompressionRatio(len(text), len(encodedBytes))
 
@@ -87,11 +91,6 @@ func encode(text string) string {
 }
 
 func decode(text string) string {
-	if len(text) == 0 {
-		dialog.ShowError(fmt.Errorf("no text to decode"), window)
-		return ""
-	}
-
 	var buffer bytes.Buffer
 
 	for i := 0; i < len(text); i += 9 {
