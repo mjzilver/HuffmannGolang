@@ -37,7 +37,29 @@ func loadTextFromFile(filename string) (string, int64) {
 	return text, fileSize
 }
 
-func saveEncodedTextToFile(filename string, bytes []byte) int64 {
+func loadBinaryFromFile(filename string) ([]byte, int64) {
+	file, err := os.Open(folder + filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	fileInfo, err := file.Stat()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fileSize := fileInfo.Size()
+
+	data := make([]byte, fileSize)
+	_, err = file.Read(data)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return data, fileSize
+}
+
+func saveBinaryToFile(filename string, bytes []byte) int64 {
 	file, err := os.Create(folder + filename)
 	if err != nil {
 		log.Fatal(err)

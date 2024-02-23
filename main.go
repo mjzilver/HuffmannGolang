@@ -1,6 +1,7 @@
 package main
 
 import (
+	"huff/gui"
 	"huff/huffmann"
 	"time"
 )
@@ -11,13 +12,16 @@ func main() {
 	startTime := time.Now()
 
 	encodedText := huffmann.Encode(text)
-	encodedFileSize := saveEncodedTextToFile("encoded.bin", encodedText)
-
-	decodedText := huffmann.Decode(encodedText)
-
-	saveTextToFile("decoded.txt", decodedText)
 
 	elapsedTime := time.Since(startTime)
+
+	saveBinaryToFile("encoded.bin", encodedText)
+	encodedFileText, encodedFileSize := loadBinaryFromFile("encoded.bin")
+
+	decodedText := huffmann.Decode(encodedFileText)
+	//decodedText := huffmann.Decode(encodedText)
+
+	saveTextToFile("decoded.txt", decodedText)
 
 	// output debug information if the original text and the decoded text are not the same
 	if text != decodedText {
@@ -42,4 +46,5 @@ func main() {
 		println("Elapsed milliseconds:", elapsedTime.Milliseconds())
 	}
 
+	gui.Start()
 }
