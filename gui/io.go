@@ -17,6 +17,14 @@ func loadTextFromFile() {
 			return
 		}
 
+		// cancel button was pressed
+		if reader == nil {
+			return
+		}
+
+		// show loading
+		unencodedTextArea.SetText("Loading...")
+
 		content, err := io.ReadAll(reader)
 		if err != nil {
 			dialog.ShowError(err, window)
@@ -63,6 +71,7 @@ func loadBinaryFromFile() {
 		if reader == nil {
 			return
 		}
+		encodedTextArea.SetText("Loading...")
 
 		if reader.URI().Extension() != ".bin" {
 			dialog.ShowError(fmt.Errorf("file is not binary"), window)
@@ -84,6 +93,7 @@ func loadBinaryFromFile() {
 			encodedText += " "
 		}
 
+		encodedText = truncateLabel(encodedText)
 		encodedTextArea.SetText(encodedText)
 	}, window)
 }

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"huff/huffmann"
-	"strconv"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -13,28 +12,36 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+const (
+	byteSize      = 9 // 8 bits per byte + 1 space
+	amountOfBytes = 1000
+	maxLabelLen   = amountOfBytes * byteSize
+)
+
 var (
 	window            fyne.Window
 	footer            *widget.Label
 	unencodedTextArea *widget.Entry
-	encodedTextArea   *widget.Entry
+	encodedTextArea   *widget.Label
 	encodedBytes      []byte
 	unencodedText     string
 )
 
 func Start() {
 	myApp := app.New()
-	window = myApp.NewWindow("Coder")
+	window = myApp.NewWindow("Huffman Coding in Go")
 	window.Resize(fyne.NewSize(800, 600))
 
 	unencodedTextArea = widget.NewMultiLineEntry()
 	unencodedTextArea.SetPlaceHolder("Unencoded Text")
 	unencodedTextArea.Wrapping = fyne.TextWrapWord
 
-	encodedTextArea = widget.NewMultiLineEntry()
-	encodedTextArea.SetPlaceHolder("Encoded Text")
+	encodedTextArea = widget.NewLabel("Encoded Text")
 	encodedTextArea.Wrapping = fyne.TextWrapWord
-	encodedTextArea.Disable() // read-only
+	encodedTextArea.Resize(fyne.NewSize(400, 400))
+	// Create a scrollable container for the encoded text area
+	encodedScrollContainer := container.NewScroll(encodedTextArea)
+	encodedScrollContainer.Resize(fyne.NewSize(400, 400))
 
 	encodeButton := widget.NewButton("Encode", func() {
 		if len(unencodedTextArea.Text) == 0 {
@@ -42,7 +49,12 @@ func Start() {
 			return
 		}
 
-		go encodedTextArea.SetText(encode(unencodedTextArea.Text))
+		encodedTextArea.SetText("Loading...")
+		go func() {
+			encodedText := truncateLabel(encode(unencodedTextArea.Text))
+			encodedTextArea.SetText(encodedText)
+			window.Canvas().Refresh(encodedTextArea)
+		}()
 	})
 
 	decodeButton := widget.NewButton("Decode", func() {
@@ -51,11 +63,16 @@ func Start() {
 			return
 		}
 
-		go unencodedTextArea.SetText(decode(encodedTextArea.Text))
+		unencodedTextArea.SetText("Loading...")
+		go func() {
+			decodedText := decode(encodedTextArea.Text)
+			unencodedTextArea.SetText(decodedText)
+			window.Canvas().Refresh(unencodedTextArea)
+		}()
 	})
 
 	leftTextStack := container.NewStack(unencodedTextArea)
-	rightTextStack := container.NewStack(encodedTextArea)
+	rightTextStack := container.NewStack(encodedScrollContainer)
 
 	openTextFileButton := widget.NewButton("Open Text File", loadTextFromFile)
 	saveBinaryFileButton := widget.NewButton("Save Encoded Text", saveEncodedTextToFile)
@@ -91,19 +108,17 @@ func encode(text string) string {
 }
 
 func decode(text string) string {
-	var buffer bytes.Buffer
+	decodedText := huffmann.Decode(encodedBytes)
 
-	for i := 0; i < len(text); i += 9 {
-		b, _ := strconv.ParseUint(text[i:i+8], 2, 8)
-		buffer.WriteByte(byte(b))
-	}
-
-	decodedText := huffmann.Decode(buffer.Bytes())
-
-	setCompressionRatio(len(decodedText), len(buffer.Bytes()))
-
-	encodedBytes = buffer.Bytes()
+	setCompressionRatio(len(decodedText), len(encodedBytes))
 	unencodedText = text
 
 	return decodedText
+}
+
+func truncateLabel(text string) string {
+	if len(text) > maxLabelLen {
+		return text[:maxLabelLen] + "..."
+	}
+	return text
 }

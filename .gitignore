@@ -1,2 +1,3 @@
 files/*.bin
 files/decoded.txt
+.DS_Store
