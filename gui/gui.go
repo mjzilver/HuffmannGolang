@@ -43,33 +43,8 @@ func Start() {
 	encodedScrollContainer := container.NewScroll(encodedTextArea)
 	encodedScrollContainer.Resize(fyne.NewSize(400, 400))
 
-	encodeButton := widget.NewButton("Encode", func() {
-		if len(unencodedTextArea.Text) == 0 {
-			dialog.ShowError(fmt.Errorf("no text to encode"), window)
-			return
-		}
-
-		encodedTextArea.SetText("Loading...")
-		go func() {
-			encodedText := truncateLabel(encode(unencodedTextArea.Text))
-			encodedTextArea.SetText(encodedText)
-			window.Canvas().Refresh(encodedTextArea)
-		}()
-	})
-
-	decodeButton := widget.NewButton("Decode", func() {
-		if len(encodedBytes) == 0 {
-			dialog.ShowError(fmt.Errorf("no encoded text to decode"), window)
-			return
-		}
-
-		unencodedTextArea.SetText("Loading...")
-		go func() {
-			decodedText := decode(encodedTextArea.Text)
-			unencodedTextArea.SetText(decodedText)
-			window.Canvas().Refresh(unencodedTextArea)
-		}()
-	})
+	encodeButton := widget.NewButton("Encode", encodeButtonClicked)
+	decodeButton := widget.NewButton("Decode", decodeButtonClicked)
 
 	leftTextStack := container.NewStack(unencodedTextArea)
 	rightTextStack := container.NewStack(encodedScrollContainer)
@@ -93,32 +68,50 @@ func Start() {
 	window.ShowAndRun()
 }
 
-func encode(text string) string {
-	encodedBytes = huffmann.Encode(text)
-	var buffer bytes.Buffer
-	for _, b := range encodedBytes {
-		buffer.WriteString(fmt.Sprintf("%08b ", b))
-	}
-
-	encodedText := buffer.String()
-
-	setCompressionRatio(len(text), len(encodedBytes))
-
-	return encodedText
-}
-
-func decode(text string) string {
-	decodedText := huffmann.Decode(encodedBytes)
-
-	setCompressionRatio(len(decodedText), len(encodedBytes))
-	unencodedText = text
-
-	return decodedText
-}
-
 func truncateLabel(text string) string {
 	if len(text) > maxLabelLen {
 		return text[:maxLabelLen] + "..."
 	}
 	return text
+}
+
+func decodeButtonClicked() {
+	if len(encodedBytes) == 0 {
+		dialog.ShowError(fmt.Errorf("no encoded text to decode"), window)
+		return
+	}
+
+	unencodedTextArea.SetText("Loading...")
+	go func() {
+		decodedText := huffmann.Decode(encodedBytes)
+
+		setCompressionRatio(len(decodedText), len(encodedBytes))
+
+		unencodedTextArea.SetText(decodedText)
+		window.Canvas().Refresh(unencodedTextArea)
+	}()
+}
+
+func encodeButtonClicked() {
+	if len(unencodedTextArea.Text) == 0 {
+		dialog.ShowError(fmt.Errorf("no text to encode"), window)
+		return
+	}
+
+	encodedTextArea.SetText("Loading...")
+	go func() {
+		unencodedText := unencodedTextArea.Text
+		encodedBytes = huffmann.Encode(unencodedText)
+		var buffer bytes.Buffer
+		for _, b := range encodedBytes {
+			buffer.WriteString(fmt.Sprintf("%08b ", b))
+		}
+
+		encodedText := truncateLabel(buffer.String())
+
+		setCompressionRatio(len(unencodedText), len(encodedBytes))
+
+		encodedTextArea.SetText(encodedText)
+		window.Canvas().Refresh(encodedTextArea)
+	}()
 }
